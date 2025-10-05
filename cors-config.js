@@ -29,8 +29,8 @@ const getCorsConfig = () => {
 
   return {
     origin: (origin, callback) => {
-      // 개발 환경에서는 origin이 없는 요청도 허용 (Postman, 모바일 앱 등)
-      if (!origin && isDevelopment) {
+      // Origin 헤더가 없는 요청(Postman, 서버간 통신, 헬스체크 등)은 항상 허용
+      if (!origin) {
         return callback(null, true);
       }
       
