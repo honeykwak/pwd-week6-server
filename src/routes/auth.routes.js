@@ -31,6 +31,15 @@ router.get(
 // 구글 콜백
 router.get('/google/callback', authController.googleCallback);
 
+// ==================== 네이버 OAuth ====================
+// 네이버 로그인 시작
+router.get(
+  '/naver',
+  passport.authenticate('naver')
+);
+
+// 네이버 콜백
+router.get('/naver/callback', authController.naverCallback);
 
 module.exports = router;
 

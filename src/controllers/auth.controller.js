@@ -160,6 +160,34 @@ class AuthController {
     })(req, res, next);
   };
 
+  /**
+   * 네이버 OAuth 콜백
+   * GET /api/auth/naver/callback
+   */
+  naverCallback = (req, res, next) => {
+    passport.authenticate('naver', (err, user, info) => {
+      if (err) {
+        return res.redirect(`${process.env.CLIENT_URL || 'http://localhost:3000'}/login?error=server_error`);
+      }
+
+      if (!user) {
+        return res.redirect(
+          `${process.env.CLIENT_URL || 'http://localhost:3000'}/login?error=${encodeURIComponent(
+            info.message || '로그인 실패'
+          )}`
+        );
+      }
+
+      req.login(user, (err) => {
+        if (err) {
+          return res.redirect(`${process.env.CLIENT_URL || 'http://localhost:3000'}/login?error=login_error`);
+        }
+
+        return res.redirect(`${process.env.CLIENT_URL || 'http://localhost:3000'}/dashboard`);
+      });
+    })(req, res, next);
+  };
+
 }
 
 module.exports = new AuthController();

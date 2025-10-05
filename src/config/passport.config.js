@@ -2,6 +2,7 @@
 const passport = require('passport');
 const LocalStrategy = require('passport-local').Strategy;
 const GoogleStrategy = require('passport-google-oauth20').Strategy;
+const NaverStrategy = require('passport-naver').Strategy;
 const User = require('../models/user.model');
 
 // 세션에 사용자 ID 저장
@@ -102,6 +103,64 @@ if (process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET) {
   );
 }
 
+// ==================== 네이버 OAuth 전략 ====================
+if (process.env.NAVER_CLIENT_ID && process.env.NAVER_CLIENT_SECRET) {
+  passport.use(
+    new NaverStrategy(
+      {
+        clientID: process.env.NAVER_CLIENT_ID,
+        clientSecret: process.env.NAVER_CLIENT_SECRET,
+        callbackURL: process.env.NAVER_CALLBACK_URL || '/api/auth/naver/callback',
+      },
+      async (accessToken, refreshToken, profile, done) => {
+        try {
+          console.log('[OAuth][Naver] callback start', {
+            id: profile && profile.id,
+            email: profile.emails && profile.emails[0] && profile.emails[0].value,
+          });
+          
+          // 기존 사용자 찾기
+          let user = await User.findOne({
+            provider: 'naver',
+            providerId: profile.id,
+          });
+
+          if (user) {
+            // 기존 사용자 로그인
+            console.log('[OAuth][Naver] existing user', user._id);
+            return done(null, user);
+          }
+
+          // 네이버는 이메일이 배열로 제공될 수 있음
+          let email = null;
+          if (profile.emails && profile.emails.length > 0) {
+            email = profile.emails[0].value.toLowerCase();
+          }
+          
+          // 이메일이 제공되지 않은 경우 providerId 기반의 placeholder 이메일 생성
+          if (!email) {
+            email = `naver_${profile.id}@placeholder.local`;
+          }
+
+          // 새 사용자 생성
+          user = await User.create({
+            provider: 'naver',
+            providerId: profile.id,
+            email,
+            name: profile.displayName || profile.name,
+            avatar: profile.photos && profile.photos[0] ? profile.photos[0].value : null,
+          });
+
+          console.log('[OAuth][Naver] created user', user._id);
+          return done(null, user);
+        } catch (error) {
+          console.error('[OAuth][Naver] error', error);
+          return done(error, null);
+        }
+      }
+    )
+  );
+}
 
 module.exports = passport;
 

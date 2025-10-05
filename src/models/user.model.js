@@ -21,7 +21,7 @@ const userSchema = new mongoose.Schema(
     // OAuth 필드
     provider: {
       type: String,
-      enum: ['local', 'google'],
+      enum: ['local', 'google', 'naver'],
       default: 'local',
     },
     providerId: {
