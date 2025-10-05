@@ -5,8 +5,10 @@ async function connectDB(uri, dbName) {
   if (!uri) {
     throw new Error('MONGODB_URI is missing. Set it in environment variables.');
   }
+  // DB 이름 기본값: 환경변수(DB_NAME) 또는 'foodmap-db'
+  const effectiveDbName = dbName || process.env.DB_NAME || 'foodmap-db';
   await mongoose.connect(uri, {
-    dbName,
+    dbName: effectiveDbName,
     autoIndex: process.env.NODE_ENV !== 'production',
     maxPoolSize: 10,
     serverSelectionTimeoutMS: 10000,
