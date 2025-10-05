@@ -35,9 +35,7 @@ router.get('/google/callback', authController.googleCallback);
 // 네이버 로그인 시작
 router.get(
   '/naver',
-  passport.authenticate('naver', {
-    scope: ['name', 'email', 'profile_image']
-  })
+  passport.authenticate('naver')
 );
 
 // 네이버 콜백

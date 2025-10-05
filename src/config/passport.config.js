@@ -111,9 +111,6 @@ if (process.env.NAVER_CLIENT_ID && process.env.NAVER_CLIENT_SECRET) {
         clientID: process.env.NAVER_CLIENT_ID,
         clientSecret: process.env.NAVER_CLIENT_SECRET,
         callbackURL: process.env.NAVER_CALLBACK_URL || '/api/auth/naver/callback',
-        profileURL: 'https://openapi.naver.com/v1/nid/me',
-        authorizationURL: 'https://nid.naver.com/oauth2.0/authorize',
-        tokenURL: 'https://nid.naver.com/oauth2.0/token',
       },
       async (accessToken, refreshToken, profile, done) => {
         try {
