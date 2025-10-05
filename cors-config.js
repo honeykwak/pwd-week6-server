@@ -30,17 +30,27 @@ const getCorsConfig = () => {
     allowedOrigins.push(defaultClient);
   }
 
+  console.log('🔧 CORS Config:', {
+    isDevelopment,
+    allowedOrigins,
+    clientUrl: process.env.CLIENT_URL
+  });
+
   return {
     origin: (origin, callback) => {
       // Origin 헤더가 없는 요청(Postman, 서버간 통신, 헬스체크 등)은 항상 허용
       if (!origin) {
+        console.log('✅ CORS: No origin header (server-to-server)');
         return callback(null, true);
       }
       
+      console.log(`🔍 CORS: Checking origin: ${origin}`);
+      
       if (allowedOrigins.includes(origin)) {
+        console.log('✅ CORS: Origin allowed');
         callback(null, true);
       } else {
-        console.warn(`CORS blocked origin: ${origin}`);
+        console.warn(`❌ CORS blocked origin: ${origin}`);
         console.log('Allowed origins:', allowedOrigins);
         callback(new Error('Not allowed by CORS'));
       }
