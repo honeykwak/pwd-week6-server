@@ -15,9 +15,9 @@ const getCorsConfig = () => {
     allowedOrigins.push(...clientUrls);
   }
 
-  // 프로덕션 환경에서 Vercel URL 패턴 허용
+  // 프로덕션 환경에서 배포 클라이언트 허용
   if (!isDevelopment) {
-    // Vercel 배포 URL 패턴 허용 (실제 도메인으로 교체 필요)
+    // 환경변수 기반 허용 도메인들
     if (process.env.VERCEL_URL) {
       allowedOrigins.push(`https://${process.env.VERCEL_URL}`);
     }
@@ -25,6 +25,9 @@ const getCorsConfig = () => {
     if (process.env.PRODUCTION_CLIENT_URL) {
       allowedOrigins.push(process.env.PRODUCTION_CLIENT_URL);
     }
+    // 기본 배포 클라이언트 도메인(프로젝트 기본값) 허용 - 필요 시 환경변수로 교체
+    const defaultClient = process.env.DEFAULT_CLIENT_URL || 'https://pwd-week6-client.vercel.app';
+    allowedOrigins.push(defaultClient);
   }
 
   return {
