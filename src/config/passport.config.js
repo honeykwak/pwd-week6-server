@@ -67,6 +67,10 @@ if (process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET) {
       },
       async (accessToken, refreshToken, profile, done) => {
         try {
+          console.log('[OAuth][Google] callback start', {
+            id: profile && profile.id,
+            email: Array.isArray(profile.emails) && profile.emails[0] && profile.emails[0].value,
+          });
           // 기존 사용자 찾기
           let user = await User.findOne({
             provider: 'google',
@@ -75,6 +79,7 @@ if (process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET) {
 
           if (user) {
             // 기존 사용자 로그인
+            console.log('[OAuth][Google] existing user', user._id);
             return done(null, user);
           }
 
@@ -87,8 +92,10 @@ if (process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET) {
             avatar: profile.photos && profile.photos[0] ? profile.photos[0].value : null,
           });
 
+          console.log('[OAuth][Google] created user', user._id);
           return done(null, user);
         } catch (error) {
+          console.error('[OAuth][Google] error', error);
           return done(error, null);
         }
       }
@@ -108,6 +115,11 @@ if (process.env.GITHUB_CLIENT_ID && process.env.GITHUB_CLIENT_SECRET) {
       },
       async (accessToken, refreshToken, profile, done) => {
         try {
+          console.log('[OAuth][GitHub] callback start', {
+            id: profile && profile.id,
+            username: profile && profile.username,
+            emailsCount: Array.isArray(profile.emails) ? profile.emails.length : 0,
+          });
           // 기존 사용자 찾기
           let user = await User.findOne({
             provider: 'github',
@@ -116,6 +128,7 @@ if (process.env.GITHUB_CLIENT_ID && process.env.GITHUB_CLIENT_SECRET) {
 
           if (user) {
             // 기존 사용자 로그인
+            console.log('[OAuth][GitHub] existing user', user._id);
             return done(null, user);
           }
 
@@ -139,8 +152,10 @@ if (process.env.GITHUB_CLIENT_ID && process.env.GITHUB_CLIENT_SECRET) {
             avatar: profile.photos && profile.photos[0] ? profile.photos[0].value : null,
           });
 
+          console.log('[OAuth][GitHub] created user', user._id);
           return done(null, user);
         } catch (error) {
+          console.error('[OAuth][GitHub] error', error);
           return done(error, null);
         }
       }
