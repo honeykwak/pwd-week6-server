@@ -166,11 +166,17 @@ class AuthController {
    */
   naverCallback = (req, res, next) => {
     passport.authenticate('naver', (err, user, info) => {
+      console.log('[Naver Callback] Error:', err);
+      console.log('[Naver Callback] User:', user);
+      console.log('[Naver Callback] Info:', info);
+      
       if (err) {
+        console.error('[Naver Callback] Authentication error:', err);
         return res.redirect(`${process.env.CLIENT_URL || 'http://localhost:3000'}/login?error=server_error`);
       }
 
       if (!user) {
+        console.error('[Naver Callback] No user found:', info);
         return res.redirect(
           `${process.env.CLIENT_URL || 'http://localhost:3000'}/login?error=${encodeURIComponent(
             info.message || '로그인 실패'
@@ -180,9 +186,11 @@ class AuthController {
 
       req.login(user, (err) => {
         if (err) {
+          console.error('[Naver Callback] Login error:', err);
           return res.redirect(`${process.env.CLIENT_URL || 'http://localhost:3000'}/login?error=login_error`);
         }
 
+        console.log('[Naver Callback] Successfully logged in user:', user._id);
         return res.redirect(`${process.env.CLIENT_URL || 'http://localhost:3000'}/dashboard`);
       });
     })(req, res, next);

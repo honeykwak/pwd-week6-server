@@ -111,13 +111,13 @@ if (process.env.NAVER_CLIENT_ID && process.env.NAVER_CLIENT_SECRET) {
         clientID: process.env.NAVER_CLIENT_ID,
         clientSecret: process.env.NAVER_CLIENT_SECRET,
         callbackURL: process.env.NAVER_CALLBACK_URL || '/api/auth/naver/callback',
+        profileURL: 'https://openapi.naver.com/v1/nid/me',
+        authorizationURL: 'https://nid.naver.com/oauth2.0/authorize',
+        tokenURL: 'https://nid.naver.com/oauth2.0/token',
       },
       async (accessToken, refreshToken, profile, done) => {
         try {
-          console.log('[OAuth][Naver] callback start', {
-            id: profile && profile.id,
-            email: profile.emails && profile.emails[0] && profile.emails[0].value,
-          });
+          console.log('[OAuth][Naver] callback start - Full profile:', JSON.stringify(profile, null, 2));
           
           // 기존 사용자 찾기
           let user = await User.findOne({
@@ -131,10 +131,13 @@ if (process.env.NAVER_CLIENT_ID && process.env.NAVER_CLIENT_SECRET) {
             return done(null, user);
           }
 
-          // 네이버는 이메일이 배열로 제공될 수 있음
+          // 네이버 프로필에서 이메일 추출
           let email = null;
           if (profile.emails && profile.emails.length > 0) {
             email = profile.emails[0].value.toLowerCase();
+          } else if (profile._json && profile._json.email) {
+            // 네이버 API 응답에서 직접 이메일 추출
+            email = profile._json.email.toLowerCase();
           }
           
           // 이메일이 제공되지 않은 경우 providerId 기반의 placeholder 이메일 생성
@@ -142,19 +145,47 @@ if (process.env.NAVER_CLIENT_ID && process.env.NAVER_CLIENT_SECRET) {
             email = `naver_${profile.id}@placeholder.local`;
           }
 
+          // 네이버 프로필에서 이름 추출
+          let name = null;
+          if (profile.displayName) {
+            name = profile.displayName;
+          } else if (profile._json && profile._json.name) {
+            name = profile._json.name;
+          } else if (profile.name) {
+            name = profile.name;
+          } else {
+            name = `네이버사용자_${profile.id}`;
+          }
+
+          // 네이버 프로필에서 아바타 추출
+          let avatar = null;
+          if (profile.photos && profile.photos.length > 0) {
+            avatar = profile.photos[0].value;
+          } else if (profile._json && profile._json.profile_image) {
+            avatar = profile._json.profile_image;
+          }
+
+          console.log('[OAuth][Naver] Creating user with data:', {
+            provider: 'naver',
+            providerId: profile.id,
+            email,
+            name,
+            avatar
+          });
+
           // 새 사용자 생성
           user = await User.create({
             provider: 'naver',
             providerId: profile.id,
             email,
-            name: profile.displayName || profile.name,
-            avatar: profile.photos && profile.photos[0] ? profile.photos[0].value : null,
+            name,
+            avatar,
           });
 
-          console.log('[OAuth][Naver] created user', user._id);
+          console.log('[OAuth][Naver] created user successfully:', user._id);
           return done(null, user);
         } catch (error) {
-          console.error('[OAuth][Naver] error', error);
+          console.error('[OAuth][Naver] error details:', error);
           return done(error, null);
         }
       }
