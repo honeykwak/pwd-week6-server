@@ -14,6 +14,9 @@ const getCorsConfig = require('../cors-config');
 
 function createApp() {
   const app = express();
+  
+  // 프록시(예: Render, Vercel) 뒤에서 HTTPS 스킴을 신뢰하여 Secure 쿠키가 정상 설정되도록 함
+  app.set('trust proxy', 1);
 
   // CORS 설정 - 로컬 개발 및 배포 환경 대응
   app.use(cors(getCorsConfig()));
@@ -32,6 +35,11 @@ function createApp() {
       sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
     },
   };
+
+  // 프록시 환경에서 set-cookie 처리 안정화
+  if (process.env.NODE_ENV === 'production') {
+    sessionConfig.proxy = true;
+  }
 
   // MongoDB가 연결되어 있으면 MongoStore 사용, 아니면 메모리 세션 사용
   if (mongoose.connection.readyState === 1) {
