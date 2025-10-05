@@ -111,6 +111,8 @@ if (process.env.NAVER_CLIENT_ID && process.env.NAVER_CLIENT_SECRET) {
         clientID: process.env.NAVER_CLIENT_ID,
         clientSecret: process.env.NAVER_CLIENT_SECRET,
         callbackURL: process.env.NAVER_CALLBACK_URL || '/api/auth/naver/callback',
+        // 네이버 API에서 사용자 정보를 가져오는 엔드포인트
+        profileURL: 'https://openapi.naver.com/v1/nid/me',
       },
       async (accessToken, refreshToken, profile, done) => {
         try {
@@ -144,15 +146,43 @@ if (process.env.NAVER_CLIENT_ID && process.env.NAVER_CLIENT_SECRET) {
 
           // 네이버 프로필에서 이름 추출
           let name = null;
-          if (profile.displayName) {
-            name = profile.displayName;
-          } else if (profile._json && profile._json.name) {
-            name = profile._json.name;
-          } else if (profile.name) {
-            name = profile.name;
-          } else {
-            name = `네이버사용자_${profile.id}`;
+          
+          // 네이버 OAuth에서 제공하는 실제 필드명들 확인
+          console.log('[OAuth][Naver] Available profile fields:', Object.keys(profile));
+          console.log('[OAuth][Naver] Profile._json fields:', profile._json ? Object.keys(profile._json) : 'No _json');
+          console.log('[OAuth][Naver] Profile._json content:', profile._json);
+          
+          // 네이버 API 응답 구조에 따른 이름 추출
+          if (profile._json) {
+            // 네이버 API 응답에서 직접 추출
+            if (profile._json.name) {
+              name = profile._json.name;
+            } else if (profile._json.nickname) {
+              name = profile._json.nickname;
+            } else if (profile._json.id) {
+              // 네이버 ID 사용 (일반적으로 더 깔끔함)
+              name = profile._json.id;
+            }
           }
+          
+          // Passport 프로필 객체에서 추출
+          if (!name) {
+            if (profile.displayName) {
+              name = profile.displayName;
+            } else if (profile.name) {
+              name = profile.name;
+            } else if (profile.username) {
+              name = profile.username;
+            }
+          }
+          
+          // 여전히 이름을 찾지 못한 경우
+          if (!name) {
+            // 네이버 ID를 사용하거나 기본값 사용
+            name = profile._json?.id || `네이버사용자_${profile.id}`;
+          }
+          
+          console.log('[OAuth][Naver] Extracted name:', name);
 
           // 네이버 프로필에서 아바타 추출
           let avatar = null;
@@ -167,7 +197,9 @@ if (process.env.NAVER_CLIENT_ID && process.env.NAVER_CLIENT_SECRET) {
             providerId: profile.id,
             email,
             name,
-            avatar
+            avatar,
+            'profile._json': profile._json,
+            'profile keys': Object.keys(profile)
           });
 
           // 새 사용자 생성
