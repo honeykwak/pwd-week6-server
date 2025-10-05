@@ -43,6 +43,13 @@ const userSchema = new mongoose.Schema(
       type: Boolean,
       default: true,
     },
+    
+    // 사용자 유형
+    userType: {
+      type: String,
+      enum: ['user', 'admin'],
+      default: 'user',
+    },
   },
   {
     timestamps: true,

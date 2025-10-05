@@ -97,6 +97,43 @@ class UsersController {
       });
     });
   });
+
+  /**
+   * 모든 사용자 목록 조회 (관리자 전용)
+   * GET /api/users/all
+   */
+  getAllUsers = asyncHandler(async (req, res) => {
+    const users = await usersService.getAllUsers();
+
+    res.json({
+      success: true,
+      data: { users },
+    });
+  });
+
+  /**
+   * 사용자 유형 변경 (관리자 전용)
+   * PUT /api/users/:userId/type
+   */
+  changeUserType = asyncHandler(async (req, res) => {
+    const { userId } = req.params;
+    const { userType } = req.body;
+
+    if (!userType || !['user', 'admin'].includes(userType)) {
+      return res.status(400).json({
+        success: false,
+        message: '유효한 사용자 유형을 입력해주세요. (user 또는 admin)',
+      });
+    }
+
+    const user = await usersService.changeUserType(userId, userType);
+
+    res.json({
+      success: true,
+      message: '사용자 유형이 변경되었습니다.',
+      data: { user },
+    });
+  });
 }
 
 module.exports = new UsersController();

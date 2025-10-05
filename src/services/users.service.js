@@ -80,6 +80,37 @@ class UsersService {
 
     return user;
   }
+
+  /**
+   * 모든 사용자 목록 조회 (관리자 전용)
+   */
+  async getAllUsers() {
+    const users = await User.find({ isActive: true })
+      .select('-password')
+      .sort({ createdAt: -1 });
+    
+    return users;
+  }
+
+  /**
+   * 사용자 유형 변경 (관리자 전용)
+   */
+  async changeUserType(userId, newUserType) {
+    const user = await User.findById(userId);
+    
+    if (!user) {
+      throw new Error('사용자를 찾을 수 없습니다.');
+    }
+
+    if (!['user', 'admin'].includes(newUserType)) {
+      throw new Error('유효하지 않은 사용자 유형입니다.');
+    }
+
+    user.userType = newUserType;
+    await user.save();
+
+    return user;
+  }
 }
 
 module.exports = new UsersService();
