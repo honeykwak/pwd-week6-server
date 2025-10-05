@@ -78,17 +78,6 @@ if (process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET) {
             return done(null, user);
           }
 
-          // 같은 이메일로 다른 provider로 가입한 경우 체크
-          const existingUser = await User.findOne({
-            email: profile.emails[0].value.toLowerCase(),
-          });
-
-          if (existingUser) {
-            return done(null, false, {
-              message: '이미 다른 방법으로 가입된 이메일입니다.',
-            });
-          }
-
           // 새 사용자 생성
           user = await User.create({
             provider: 'google',
@@ -131,25 +120,21 @@ if (process.env.GITHUB_CLIENT_ID && process.env.GITHUB_CLIENT_SECRET) {
           }
 
           // 깃허브는 이메일이 배열로 제공되며, primary 이메일 찾기
-          const primaryEmail = profile.emails && profile.emails.find((email) => email.primary);
-          const email = primaryEmail ? primaryEmail.value : profile.emails[0].value;
-
-          // 같은 이메일로 다른 provider로 가입한 경우 체크
-          const existingUser = await User.findOne({
-            email: email.toLowerCase(),
-          });
-
-          if (existingUser) {
-            return done(null, false, {
-              message: '이미 다른 방법으로 가입된 이메일입니다.',
-            });
+          let email = null;
+          if (Array.isArray(profile.emails) && profile.emails.length > 0) {
+            const primaryEmail = profile.emails.find((e) => e.primary) || profile.emails[0];
+            email = primaryEmail && primaryEmail.value ? primaryEmail.value.toLowerCase() : null;
+          }
+          // 이메일이 제공되지 않은 경우 providerId 기반의 placeholder 이메일 생성
+          if (!email) {
+            email = `github_${profile.id}@placeholder.local`;
           }
 
           // 새 사용자 생성
           user = await User.create({
             provider: 'github',
             providerId: profile.id,
-            email: email.toLowerCase(),
+            email,
             name: profile.displayName || profile.username,
             avatar: profile.photos && profile.photos[0] ? profile.photos[0].value : null,
           });

@@ -8,7 +8,6 @@ const userSchema = new mongoose.Schema(
     email: {
       type: String,
       required: true,
-      unique: true,
       lowercase: true,
       trim: true,
     },
@@ -52,6 +51,8 @@ const userSchema = new mongoose.Schema(
 
 // 이메일과 providerId의 복합 유니크 인덱스 (같은 이메일도 provider가 다르면 허용)
 userSchema.index({ email: 1, provider: 1 }, { unique: true });
+// 동일 provider 내에서 providerId는 유일
+userSchema.index({ provider: 1, providerId: 1 }, { unique: true, sparse: true });
 
 // 비밀번호 해싱 미들웨어
 userSchema.pre('save', async function (next) {
