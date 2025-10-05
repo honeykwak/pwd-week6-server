@@ -31,17 +31,6 @@ router.get(
 // 구글 콜백
 router.get('/google/callback', authController.googleCallback);
 
-// ==================== 깃허브 OAuth ====================
-// 깃허브 로그인 시작
-router.get(
-  '/github',
-  passport.authenticate('github', {
-    scope: ['user:email'],
-  })
-);
-
-// 깃허브 콜백
-router.get('/github/callback', authController.githubCallback);
 
 module.exports = router;
 

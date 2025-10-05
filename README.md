@@ -19,8 +19,8 @@
 ---
 
 ## 🧭 한눈에 보는 개발 흐름
-- 0) 목표: 맛집 데이터 CRUD, 제보 관리, 사용자 인증(로컬/구글/깃허브)
-- 1) 환경 준비: Node/npm, MongoDB(Atlas 권장 또는 로컬), GitHub, OAuth 콘솔
+- 0) 목표: 맛집 데이터 CRUD, 제보 관리, 사용자 인증(로컬/구글)
+- 1) 환경 준비: Node/npm, MongoDB(Atlas 권장 또는 로컬), OAuth 콘솔
 - 2) .env 설정: `MONGODB_URI`, `SESSION_SECRET`, `CLIENT_URL`, `PORT`, (선택) OAuth 키들
 - 3) 로컬 실행: `npm start` → `GET /health` 확인
 - 4) 기능 구현/검증: Restaurants, Submissions, Auth, Users
@@ -51,9 +51,6 @@ CLIENT_URL=http://localhost:5173
 # GOOGLE_CLIENT_ID=...
 # GOOGLE_CLIENT_SECRET=...
 # GOOGLE_CALLBACK_URL=http://localhost:5000/api/auth/google/callback
-# GITHUB_CLIENT_ID=...
-# GITHUB_CLIENT_SECRET=...
-# GITHUB_CALLBACK_URL=http://localhost:5000/api/auth/github/callback
 ```
 
 ### 2) 설치/실행
@@ -80,7 +77,7 @@ curl http://localhost:5000/health
 - Runtime: Node.js 22
 - Framework: Express 5, cors
 - DB: MongoDB (Mongoose 8)
-- 인증: Passport(Local/Google/GitHub) + express-session + connect-mongo
+- 인증: Passport(Local/Google) + express-session + connect-mongo
 - 구조: MVC(S)
 
 ```
@@ -88,7 +85,7 @@ src/
  ├─ app.js                       # Express 앱 구성(미들웨어/CORS/세션/라우팅)
  ├─ config/
  │   ├─ db.js                    # Mongoose 연결/종료
- │   └─ passport.config.js       # Passport(Local/Google/GitHub)
+ │   └─ passport.config.js       # Passport(Local/Google)
  ├─ controllers/
  │   ├─ auth.controller.js
  │   ├─ restaurants.controller.js
@@ -129,7 +126,6 @@ server.js                        # 서버 시작 + DB 연결 + 시드 주입
 
 선택(OAuth 활성화 시)
 - `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`, `GOOGLE_CALLBACK_URL`
-- `GITHUB_CLIENT_ID`, `GITHUB_CLIENT_SECRET`, `GITHUB_CALLBACK_URL`
 
 ---
 
@@ -172,7 +168,7 @@ server.js                        # 서버 시작 + DB 연결 + 시드 주입
 {
   email: String,
   password: String,            // provider === 'local'일 때만 필수
-  provider: 'local'|'google'|'github',
+  provider: 'local'|'google',
   providerId: String | null,
   name: String,
   avatar: String | null,
@@ -209,7 +205,6 @@ server.js                        # 서버 시작 + DB 연결 + 시드 주입
 - `POST /api/auth/logout`    로그아웃(세션 제거)
 - `GET  /api/auth/me`        현재 사용자 정보(보호)
 - `GET  /api/auth/google`    구글 OAuth 시작(옵션)
-- `GET  /api/auth/github`    깃허브 OAuth 시작(옵션)
 
 ### Users
 - `GET  /api/users/profile`  내 프로필 조회(보호)
@@ -234,7 +229,6 @@ server.js                        # 서버 시작 + DB 연결 + 시드 주입
 
 ### OAuth(선택: 환경변수 설정 시 활성화)
 - 구글: `GET /api/auth/google` → 구글 동의 후 콜백(`/api/auth/google/callback`) → 세션 저장 → `CLIENT_URL/dashboard`로 리다이렉트
-- 깃허브: `GET /api/auth/github` → 깃허브 동의 후 콜백(`/api/auth/github/callback`) → 세션 저장 → 동일
 - 동일 이메일로 다른 제공자에 가입된 경우 → 로그인 거절(중복 방지)
 
 ### 보안 고려
@@ -281,7 +275,7 @@ curl -X POST http://localhost:5000/api/auth/login `
 
 ## 🌍 배포 가이드(Render 요약)
 
-1) Render Dashboard → New → Web Service → GitHub 저장소(`pwd-week6-server`) 선택
+1) Render Dashboard → New → Web Service → GitHub 저장소 선택
 2) 설정 예시
 - Name: `pwd-week6-server`
 - Branch: `main`
@@ -299,9 +293,6 @@ PORT=10000
 GOOGLE_CLIENT_ID=...
 GOOGLE_CLIENT_SECRET=...
 GOOGLE_CALLBACK_URL=https://your-server-app.onrender.com/api/auth/google/callback
-GITHUB_CLIENT_ID=...
-GITHUB_CLIENT_SECRET=...
-GITHUB_CALLBACK_URL=https://your-server-app.onrender.com/api/auth/github/callback
 ```
 
 4) 배포 검증
@@ -328,13 +319,13 @@ curl https://your-app.onrender.com/health   # {"status":"ok","db":1}
 - [ ] Submissions CRUD 정상 응답
 - [ ] Register/Login/Logout/Me 정상 동작
 - [ ] Users Profile/Password/Account 정상 동작
-- [ ] (선택) Google/GitHub OAuth 정상 동작
+- [ ] (선택) Google OAuth 정상 동작
 - [ ] CORS/세션 쿠키 정상 동작(로컬/배포)
 
 ---
 
 ## 📚 참고 자료
-- Passport: Local/Google/GitHub Strategy
+- Passport: Local/Google Strategy
 - Express Session / connect-mongo / Mongoose
 - Render/Vercel 배포 문서
 

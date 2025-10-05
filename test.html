@@ -94,9 +94,6 @@
     .btn-google {
       background: #4285f4;
     }
-    .btn-github {
-      background: #333;
-    }
     pre {
       background: #f8f9fa;
       padding: 20px;
@@ -177,7 +174,6 @@
     <div class="section">
       <h2>🌐 소셜 로그인</h2>
       <button class="btn-google" onclick="googleLogin()">🔵 구글 로그인</button>
-      <button class="btn-github" onclick="githubLogin()">⚫ 깃허브 로그인</button>
       <p style="color: #666; font-size: 12px; margin-top: 10px;">
         * OAuth 클라이언트 ID가 설정되어 있어야 작동합니다.
       </p>
@@ -373,9 +369,6 @@
       window.location.href = `${API_URL}/auth/google`;
     }
     
-    function githubLogin() {
-      window.location.href = `${API_URL}/auth/github`;
-    }
     
     function showResponse(data) {
       document.getElementById('response').textContent = JSON.stringify(data, null, 2);
