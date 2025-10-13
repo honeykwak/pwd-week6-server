@@ -1,5 +1,9 @@
 ﻿# 🍜 PWD Week 6 - Ajou Campus Foodmap API (Express + MongoDB + 인증 시스템)
 
+## 강의자료
+(https://drive.google.com/file/d/1Q0I5q6Qbdwt8JJmZCCR6vRksSCjE0hY_/view?usp=drive_link)
+
+
 아주 캠퍼스 푸드맵 백엔드(API) 완전 가이드입니다. 웹 개발 입문자들이 차근차근 따라할 수 있도록 체계적으로 구성된 문서로, Express.js 기반 REST API 개발부터 인증 시스템 구현, 배포까지 모든 과정을 다룹니다.
 
 ## 📋 목차
