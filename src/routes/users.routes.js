@@ -2,6 +2,7 @@
 const express = require('express');
 const usersController = require('../controllers/users.controller');
 const { isAuthenticated, isLocalAccount, isAdmin } = require('../middleware/auth.middleware');
+const { upload } = require('../config/cloudinary.config');
 
 const router = express.Router();
 
@@ -10,6 +11,12 @@ router.get('/profile', isAuthenticated, usersController.getProfile);
 
 // 내 프로필 수정
 router.put('/profile', isAuthenticated, usersController.updateProfile);
+
+// 프로필 이미지 업로드
+router.post('/avatar', isAuthenticated, upload.single('avatar'), usersController.uploadAvatar);
+
+// 프로필 이미지 삭제
+router.delete('/avatar', isAuthenticated, usersController.deleteAvatar);
 
 // 비밀번호 변경 (로컬 계정만)
 router.put('/password', isLocalAccount, usersController.changePassword);

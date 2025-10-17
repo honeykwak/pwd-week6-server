@@ -12,7 +12,9 @@ const SubmissionSchema = new mongoose.Schema(
     review: { type: String, default: '' },
     submitterName: { type: String, default: '' },
     submitterEmail: { type: String, default: '' },
-    status: { type: String, enum: ['pending', 'approved', 'rejected'], default: 'pending', index: true }
+    status: { type: String, enum: ['pending', 'approved', 'rejected'], default: 'pending', index: true },
+    submittedBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User', index: true }, // 제보한 사용자
+    rejectionReason: { type: String, default: '' }, // 거부 사유
   },
   {
     timestamps: true,

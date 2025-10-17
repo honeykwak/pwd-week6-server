@@ -90,6 +90,7 @@ if (process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET) {
             email: profile.emails[0].value.toLowerCase(),
             name: profile.displayName,
             avatar: profile.photos && profile.photos[0] ? profile.photos[0].value : null,
+            emailVerified: true, // OAuth 사용자는 자동 인증
           });
 
           console.log('[OAuth][Google] created user', user._id);
@@ -209,6 +210,7 @@ if (process.env.NAVER_CLIENT_ID && process.env.NAVER_CLIENT_SECRET) {
             email,
             name,
             avatar,
+            emailVerified: true, // OAuth 사용자는 자동 인증
           });
 
           console.log('[OAuth][Naver] created user successfully:', user._id);

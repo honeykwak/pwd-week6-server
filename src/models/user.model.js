@@ -50,16 +50,35 @@ const userSchema = new mongoose.Schema(
       enum: ['user', 'admin'],
       default: 'user',
     },
+    
+    // 이메일 인증
+    emailVerified: {
+      type: Boolean,
+      default: false,
+    },
+    verificationToken: {
+      type: String,
+    },
+    verificationTokenExpires: {
+      type: Date,
+    },
   },
   {
     timestamps: true,
   }
 );
 
-// 이메일과 providerId의 복합 유니크 인덱스 (같은 이메일도 provider가 다르면 허용)
+// 이메일과 provider의 복합 유니크 인덱스 (같은 이메일도 provider가 다르면 허용)
 userSchema.index({ email: 1, provider: 1 }, { unique: true });
-// 동일 provider 내에서 providerId는 유일
-userSchema.index({ provider: 1, providerId: 1 }, { unique: true, sparse: true });
+// OAuth provider에서만 providerId 유니크 (null 값 제외)
+userSchema.index(
+  { provider: 1, providerId: 1 }, 
+  { 
+    unique: true, 
+    sparse: true,
+    partialFilterExpression: { providerId: { $type: 'string' } } // providerId가 문자열인 경우만 인덱스 적용
+  }
+);
 
 // 비밀번호 해싱 미들웨어
 userSchema.pre('save', async function (next) {

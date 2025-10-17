@@ -1,6 +1,8 @@
 // src/controllers/auth.controller.js
 const passport = require('passport');
 const authService = require('../services/auth.service');
+const emailService = require('../services/email.service');
+const User = require('../models/user.model');
 const asyncHandler = require('../utils/asyncHandler');
 
 class AuthController {
@@ -9,6 +11,15 @@ class AuthController {
    * POST /api/auth/register
    */
   register = asyncHandler(async (req, res) => {
+    // 이미 로그인되어 있는 경우 현재 사용자 정보 반환
+    if (req.isAuthenticated()) {
+      return res.json({
+        success: true,
+        message: '이미 로그인되어 있습니다.',
+        data: { user: req.user },
+      });
+    }
+
     const { email, password, name } = req.body;
 
     // 유효성 검사
@@ -28,6 +39,33 @@ class AuthController {
 
     const user = await authService.register({ email, password, name });
 
+    // 이메일 인증 기능 (이메일 설정이 되어 있을 때만 실행)
+    if (process.env.EMAIL_USER && process.env.EMAIL_PASSWORD) {
+      try {
+        // 인증 토큰 생성 및 저장
+        const verificationToken = emailService.generateVerificationToken();
+        
+        // findByIdAndUpdate를 사용하여 비밀번호 해싱 미들웨어 우회
+        await User.findByIdAndUpdate(user._id, {
+          verificationToken: verificationToken,
+          verificationTokenExpires: new Date(Date.now() + 24 * 60 * 60 * 1000),
+        });
+
+        // 업데이트된 user 객체에 토큰 정보 추가
+        user.verificationToken = verificationToken;
+        user.verificationTokenExpires = new Date(Date.now() + 24 * 60 * 60 * 1000);
+
+        // 인증 이메일 발송
+        await emailService.sendVerificationEmail(user, verificationToken);
+        console.log('✅ 인증 이메일 발송 성공');
+      } catch (error) {
+        console.error('⚠️ 인증 이메일 발송 실패:', error.message);
+        // 이메일 발송 실패해도 회원가입은 완료
+      }
+    } else {
+      console.log('ℹ️  이메일 인증 비활성화 (EMAIL_USER 또는 EMAIL_PASSWORD가 설정되지 않음)');
+    }
+
     // 회원가입 후 자동 로그인
     req.login(user, (err) => {
       if (err) {
@@ -39,7 +77,7 @@ class AuthController {
 
       res.status(201).json({
         success: true,
-        message: '회원가입이 완료되었습니다.',
+        message: '회원가입이 완료되었습니다. 이메일을 확인하여 인증을 완료해주세요.',
         data: { user },
       });
     });
@@ -50,6 +88,15 @@ class AuthController {
    * POST /api/auth/login
    */
   login = (req, res, next) => {
+    // 이미 로그인되어 있는 경우 현재 사용자 정보 반환
+    if (req.isAuthenticated()) {
+      return res.json({
+        success: true,
+        message: '이미 로그인되어 있습니다.',
+        data: { user: req.user },
+      });
+    }
+
     passport.authenticate('local', (err, user, info) => {
       if (err) {
         return res.status(500).json({
@@ -195,6 +242,96 @@ class AuthController {
       });
     })(req, res, next);
   };
+
+  /**
+   * 이메일 인증
+   * GET /api/auth/verify-email/:token
+   */
+  verifyEmail = asyncHandler(async (req, res) => {
+    const { token } = req.params;
+
+    const user = await User.findOne({
+      verificationToken: token,
+      verificationTokenExpires: { $gt: Date.now() },
+    });
+
+    if (!user) {
+      return res.status(400).json({
+        success: false,
+        message: '유효하지 않거나 만료된 인증 링크입니다.',
+      });
+    }
+
+    // 이메일 인증 완료
+    user.emailVerified = true;
+    user.verificationToken = undefined;
+    user.verificationTokenExpires = undefined;
+    await user.save();
+
+    // 환영 이메일 발송 (선택사항)
+    try {
+      await emailService.sendWelcomeEmail(user);
+    } catch (error) {
+      console.error('환영 이메일 발송 실패:', error);
+    }
+
+    res.json({
+      success: true,
+      message: '이메일 인증이 완료되었습니다!',
+      data: { user },
+    });
+  });
+
+  /**
+   * 인증 이메일 재전송
+   * POST /api/auth/resend-verification
+   */
+  resendVerification = asyncHandler(async (req, res) => {
+    if (!req.user) {
+      return res.status(401).json({
+        success: false,
+        message: '로그인이 필요합니다.',
+      });
+    }
+
+    const user = await User.findById(req.user._id);
+
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: '사용자를 찾을 수 없습니다.',
+      });
+    }
+
+    if (user.emailVerified) {
+      return res.status(400).json({
+        success: false,
+        message: '이미 이메일 인증이 완료되었습니다.',
+      });
+    }
+
+    // OAuth 사용자는 이메일 인증 불필요
+    if (user.provider !== 'local') {
+      return res.status(400).json({
+        success: false,
+        message: 'OAuth 로그인 사용자는 이메일 인증이 필요하지 않습니다.',
+      });
+    }
+
+    // 새 인증 토큰 생성
+    const verificationToken = emailService.generateVerificationToken();
+    user.verificationToken = verificationToken;
+    user.verificationTokenExpires = new Date(Date.now() + 24 * 60 * 60 * 1000);
+    await user.save();
+
+    // 인증 이메일 재발송
+    await emailService.sendVerificationEmail(user, verificationToken);
+
+    res.json({
+      success: true,
+      message: '인증 이메일이 재전송되었습니다. 이메일을 확인해주세요.',
+    });
+  });
 
 }
 

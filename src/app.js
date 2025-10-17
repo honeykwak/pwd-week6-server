@@ -7,6 +7,7 @@ const restaurantsRouter = require('./routes/restaurants.routes');
 const submissionsRouter = require('./routes/submissions.routes');
 const authRouter = require('./routes/auth.routes');
 const usersRouter = require('./routes/users.routes');
+const notificationsRouter = require('./routes/notifications.routes');
 const notFound = require('./middleware/notFound.middleware');
 const errorHandler = require('./middleware/error.middleware');
 const mongoose = require('mongoose');
@@ -57,19 +58,8 @@ function createApp() {
   }
   // 그 외의 경우 메모리 세션 사용 (개발/테스트 환경)
 
-  app.use(session(sessionConfig));
-
-  // 세션 디버깅 미들웨어
-  app.use((req, res, next) => {
-    console.log('📋 Session Debug:', {
-      hasSession: !!req.session,
-      sessionID: req.sessionID,
-      isAuthenticated: req.isAuthenticated ? req.isAuthenticated() : false,
-      user: req.user ? req.user.email : 'none',
-      cookies: req.headers.cookie ? 'present' : 'missing'
-    });
-    next();
-  });
+  const sessionMiddleware = session(sessionConfig);
+  app.use(sessionMiddleware);
 
   // Passport 초기화
   app.use(passport.initialize());
@@ -97,11 +87,12 @@ function createApp() {
   app.use('/api/users', usersRouter);
   app.use('/api/restaurants', restaurantsRouter);
   app.use('/api/submissions', submissionsRouter);
+  app.use('/api/notifications', notificationsRouter);
 
   app.use(notFound);
   app.use(errorHandler);
 
-  return app;
+  return { app, sessionMiddleware };
 }
 
 module.exports = createApp;

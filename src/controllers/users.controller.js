@@ -1,6 +1,7 @@
 // src/controllers/users.controller.js
 const usersService = require('../services/users.service');
 const asyncHandler = require('../utils/asyncHandler');
+const { cloudinary } = require('../config/cloudinary.config');
 
 class UsersController {
   /**
@@ -31,6 +32,72 @@ class UsersController {
     res.json({
       success: true,
       message: '프로필이 수정되었습니다.',
+      data: { user },
+    });
+  });
+
+  /**
+   * 프로필 이미지 업로드
+   * POST /api/users/avatar
+   */
+  uploadAvatar = asyncHandler(async (req, res) => {
+    if (!req.file) {
+      return res.status(400).json({
+        success: false,
+        message: '이미지 파일이 필요합니다.',
+      });
+    }
+
+    // Cloudinary URL 추출
+    const avatarUrl = req.file.path;
+
+    // 기존 아바타가 있으면 Cloudinary에서 삭제
+    if (req.user.avatar) {
+      try {
+        // Cloudinary URL에서 public_id 추출
+        const publicId = req.user.avatar.split('/').slice(-2).join('/').split('.')[0];
+        await cloudinary.uploader.destroy(publicId);
+      } catch (error) {
+        console.error('기존 이미지 삭제 실패:', error);
+        // 삭제 실패해도 계속 진행
+      }
+    }
+
+    // 사용자 프로필 업데이트
+    const user = await usersService.updateProfile(req.user._id, {
+      avatar: avatarUrl,
+    });
+
+    res.json({
+      success: true,
+      message: '프로필 이미지가 업로드되었습니다.',
+      data: { user },
+    });
+  });
+
+  /**
+   * 프로필 이미지 삭제
+   * DELETE /api/users/avatar
+   */
+  deleteAvatar = asyncHandler(async (req, res) => {
+    // Cloudinary에서 이미지 삭제
+    if (req.user.avatar) {
+      try {
+        const publicId = req.user.avatar.split('/').slice(-2).join('/').split('.')[0];
+        await cloudinary.uploader.destroy(publicId);
+      } catch (error) {
+        console.error('이미지 삭제 실패:', error);
+      }
+    }
+
+    // 사용자 프로필 업데이트
+    const user = await usersService.updateProfile(req.user._id, {
+      avatar: null,
+    });
+
+    res.json({
+      success: true,
+      message: '프로필 이미지가 삭제되었습니다.',
       data: { user },
     });
   });

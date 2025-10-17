@@ -8,16 +8,23 @@ const router = express.Router();
 
 // ==================== 로컬 인증 ====================
 // 회원가입
-router.post('/register', isNotAuthenticated, authController.register);
+router.post('/register', authController.register);
 
 // 로그인
-router.post('/login', isNotAuthenticated, authController.login);
+router.post('/login', authController.login);
 
 // 로그아웃
 router.post('/logout', isAuthenticated, authController.logout);
 
 // 현재 사용자 정보
 router.get('/me', isAuthenticated, authController.getCurrentUser);
+
+// ==================== 이메일 인증 ====================
+// 이메일 인증
+router.get('/verify-email/:token', authController.verifyEmail);
+
+// 인증 이메일 재전송
+router.post('/resend-verification', isAuthenticated, authController.resendVerification);
 
 // ==================== 구글 OAuth ====================
 // 구글 로그인 시작

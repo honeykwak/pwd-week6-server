@@ -25,15 +25,17 @@ const changeUserType = async (email, newUserType) => {
       return;
     }
 
-    // 사용자 유형 변경
-    user.userType = newUserType;
-    await user.save();
+    // 사용자 유형 변경 (save 훅 우회)
+    const updated = await User.findOneAndUpdate(
+      { email: email.toLowerCase() },
+      { $set: { userType: newUserType } },
+      { new: true }
+    );
     
     console.log('사용자 유형이 변경되었습니다:');
-    console.log('이메일:', user.email);
-    console.log('이름:', user.name);
-    console.log('이전 유형:', user.userType === 'admin' ? '관리자' : '일반 사용자');
-    console.log('새 유형:', newUserType === 'admin' ? '관리자' : '일반 사용자');
+    console.log('이메일:', updated.email);
+    console.log('이름:', updated.name);
+    console.log('새 유형:', updated.userType === 'admin' ? '관리자' : '일반 사용자');
 
   } catch (error) {
     console.error('사용자 유형 변경 중 오류 발생:', error);
