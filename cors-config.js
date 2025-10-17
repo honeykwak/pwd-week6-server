@@ -38,6 +38,12 @@ const getCorsConfig = () => {
 
   return {
     origin: (origin, callback) => {
+      // 개발 환경에서는 모든 origin 허용
+      if (isDevelopment) {
+        console.log(`✅ CORS (dev): Allowing origin: ${origin || 'no-origin'}`);
+        return callback(null, true);
+      }
+      
       // Origin 헤더가 없는 요청(Postman, 서버간 통신, 헬스체크 등)은 항상 허용
       if (!origin) {
         console.log('✅ CORS: No origin header (server-to-server)');

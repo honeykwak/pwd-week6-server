@@ -9,13 +9,24 @@ const app = createApp();
 
 async function start() {
   try {
+    console.log('🚀 Starting server...');
+    console.log(`📊 Connecting to MongoDB...`);
     await connectDB(process.env.MONGODB_URI, process.env.DB_NAME);
-    await ensureSeededOnce();
+    console.log('✅ MongoDB connected');
+    
+    console.log('🌱 Seeding initial data...');
+    const seedResult = await ensureSeededOnce();
+    console.log('✅ Seed complete:', seedResult);
+    
     if (require.main === module) {
-      app.listen(PORT, () => console.log(`Server listening on port ${PORT}`));
+      app.listen(PORT, () => {
+        console.log(`✅ Server listening on port ${PORT}`);
+        console.log(`🏥 Health check: http://localhost:${PORT}/health`);
+        console.log(`📚 API ready: http://localhost:${PORT}/api`);
+      });
     }
   } catch (err) {
-    console.error('Failed to start server:', err);
+    console.error('❌ Failed to start server:', err);
     process.exit(1);
   }
 }
