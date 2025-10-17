@@ -59,6 +59,18 @@ function createApp() {
 
   app.use(session(sessionConfig));
 
+  // 세션 디버깅 미들웨어
+  app.use((req, res, next) => {
+    console.log('📋 Session Debug:', {
+      hasSession: !!req.session,
+      sessionID: req.sessionID,
+      isAuthenticated: req.isAuthenticated ? req.isAuthenticated() : false,
+      user: req.user ? req.user.email : 'none',
+      cookies: req.headers.cookie ? 'present' : 'missing'
+    });
+    next();
+  });
+
   // Passport 초기화
   app.use(passport.initialize());
   app.use(passport.session());
