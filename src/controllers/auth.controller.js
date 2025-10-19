@@ -48,44 +48,7 @@ class AuthController {
       });
     }
 
-    let emailSent = false;
-    let registrationMessage = '회원가입이 완료되었습니다.';
-
-    // 이메일 인증 기능 (이메일 설정이 되어 있을 때만 실행)
-    if (process.env.EMAIL_USER && process.env.EMAIL_PASSWORD) {
-      try {
-        // 인증 토큰 생성 및 저장
-        const verificationToken = emailService.generateVerificationToken();
-        
-        // findByIdAndUpdate를 사용하여 비밀번호 해싱 미들웨어 우회
-        await User.findByIdAndUpdate(user._id, {
-          verificationToken: verificationToken,
-          verificationTokenExpires: new Date(Date.now() + 24 * 60 * 60 * 1000),
-        });
-
-        // 업데이트된 user 객체에 토큰 정보 추가
-        user.verificationToken = verificationToken;
-        user.verificationTokenExpires = new Date(Date.now() + 24 * 60 * 60 * 1000);
-
-        // 인증 이메일 발송
-        emailSent = await emailService.sendVerificationEmail(user, verificationToken);
-        
-        if (emailSent) {
-          console.log('✅ 인증 이메일 발송 성공');
-          registrationMessage = '회원가입이 완료되었습니다. 이메일을 확인하여 인증을 완료해주세요.';
-        } else {
-          console.log('⚠️ 인증 이메일 발송 실패 (회원가입은 완료됨)');
-          registrationMessage = '회원가입이 완료되었습니다. (인증 이메일 발송 실패 - 나중에 대시보드에서 재전송 가능)';
-        }
-      } catch (error) {
-        console.error('⚠️ 인증 이메일 처리 실패:', error.message);
-        registrationMessage = '회원가입이 완료되었습니다. (인증 이메일 발송 실패 - 나중에 대시보드에서 재전송 가능)';
-      }
-    } else {
-      console.log('ℹ️  이메일 인증 비활성화 (EMAIL_USER 또는 EMAIL_PASSWORD가 설정되지 않음)');
-    }
-
-    // 회원가입 후 자동 로그인
+    // 회원가입 후 자동 로그인 먼저 처리
     req.login(user, (err) => {
       if (err) {
         return res.status(500).json({
@@ -94,11 +57,41 @@ class AuthController {
         });
       }
 
+      // 응답을 먼저 보냄 (타임아웃 방지)
       res.status(201).json({
         success: true,
-        message: registrationMessage,
+        message: '회원가입이 완료되었습니다. 이메일을 확인하여 인증을 완료해주세요.',
         data: { user },
       });
+
+      // 이메일 발송은 백그라운드에서 비동기로 처리 (응답 후 실행)
+      if (process.env.EMAIL_USER && process.env.EMAIL_PASSWORD) {
+        (async () => {
+          try {
+            // 인증 토큰 생성 및 저장
+            const verificationToken = emailService.generateVerificationToken();
+            
+            // findByIdAndUpdate를 사용하여 비밀번호 해싱 미들웨어 우회
+            await User.findByIdAndUpdate(user._id, {
+              verificationToken: verificationToken,
+              verificationTokenExpires: new Date(Date.now() + 24 * 60 * 60 * 1000),
+            });
+
+            // 인증 이메일 발송
+            const emailSent = await emailService.sendVerificationEmail(user, verificationToken);
+            
+            if (emailSent) {
+              console.log(`✅ 인증 이메일 발송 성공: ${user.email}`);
+            } else {
+              console.log(`⚠️ 인증 이메일 발송 실패: ${user.email} (사용자는 대시보드에서 재전송 가능)`);
+            }
+          } catch (error) {
+            console.error(`⚠️ 인증 이메일 처리 실패: ${user.email}`, error.message);
+          }
+        })();
+      } else {
+        console.log('ℹ️  이메일 인증 비활성화 (EMAIL_USER 또는 EMAIL_PASSWORD가 설정되지 않음)');
+      }
     });
   });
 
