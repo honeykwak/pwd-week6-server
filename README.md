@@ -41,12 +41,25 @@
 - **세션 관리**: Express Session + MongoDB 세션 저장소
 - **권한 제어**: 미들웨어 기반 라우트 보호
 - **보안 강화**: bcrypt 해싱, CORS, 쿠키 보안
+- **이메일 인증**: 회원가입 시 이메일 인증 (로컬 환경, Nodemailer)
 
 #### 🛡️ **API 보안 & 미들웨어**
 - **인증 미들웨어**: 로그인 상태 확인
 - **권한 미들웨어**: 관리자 권한 검증
 - **에러 처리**: 통합 에러 핸들링 시스템
 - **CORS 설정**: 환경별 허용 도메인 관리
+
+#### 📸 **프로필 & 미디어**
+- **프로필 이미지 업로드**: Multer + Cloudinary 통합
+- **자동 이미지 최적화**: 400x400 리사이즈, 얼굴 중심 크롭
+- **파일 크기 제한**: 5MB 제한, 이미지 파일만 허용
+
+#### 🔔 **실시간 알림 시스템**
+- **Socket.io 통합**: 실시간 양방향 통신
+- **알림 종류**:
+  - 새로운 제보 알림 (관리자)
+  - 제보 승인/거부 알림 (사용자)
+- **알림 관리**: 읽음/삭제 처리, MongoDB 저장
 
 #### 📊 **데이터베이스 설계**
 - **MongoDB 스키마**: 최적화된 인덱스 설계
@@ -80,6 +93,17 @@
 - **JSON**: 데이터 교환 형식
 - **HTTP 메서드**: GET, POST, PUT, DELETE
 - **쿠키 기반 인증**: HttpOnly, Secure, SameSite 설정
+- **Socket.io 4.8**: 실시간 양방향 통신
+
+#### **파일 업로드 & 저장소**
+- **Multer 2.0**: 멀티파트 폼 데이터 처리
+- **Cloudinary**: 클라우드 이미지 저장 및 최적화
+- **multer-storage-cloudinary**: Cloudinary 스토리지 어댑터
+
+#### **이메일 & 알림**
+- **Nodemailer 7.0**: 이메일 발송 (SMTP)
+- **Socket.io**: 실시간 알림 푸시
+- **MongoDB**: 알림 데이터 저장
 
 #### **고급 기능**
 - **자동 시드 데이터**: 서버 시작 시 초기 데이터 자동 주입
@@ -87,6 +111,7 @@
 - **환경별 설정**: development/production 자동 감지
 - **에러 처리**: 통합 에러 핸들링 시스템
 - **성능 최적화**: 세션 터치 최적화, 연결 풀 관리
+- **백그라운드 작업**: 이메일 발송 비동기 처리
 
 ### 🏗️ **서버 아키텍처**
 
@@ -179,6 +204,15 @@ GOOGLE_CALLBACK_URL=http://localhost:5000/api/auth/google/callback
 NAVER_CLIENT_ID=your-naver-client-id
 NAVER_CLIENT_SECRET=your-naver-client-secret
 NAVER_CALLBACK_URL=http://localhost:5000/api/auth/naver/callback
+
+# Cloudinary 설정 (이미지 업로드 기능 사용 시)
+CLOUDINARY_CLOUD_NAME=your-cloud-name
+CLOUDINARY_API_KEY=your-api-key
+CLOUDINARY_API_SECRET=your-api-secret
+
+# 이메일 설정 (이메일 인증 기능 사용 시)
+EMAIL_USER=your-email@gmail.com
+EMAIL_PASSWORD=your-app-password
 ```
 
 > 📝 **중요**: 
@@ -240,13 +274,25 @@ http://localhost:5000/health
 - **CLIENT_URL**: 프론트엔드 URL (CORS 설정용)
 - **PORT**: 서버 포트 (기본값: 3000, 권장: 5000)
 
-#### 선택적 환경변수 (OAuth 사용 시)
+#### 선택적 환경변수
+
+**OAuth 설정 (소셜 로그인 사용 시)**
 - **GOOGLE_CLIENT_ID**: Google OAuth 클라이언트 ID
 - **GOOGLE_CLIENT_SECRET**: Google OAuth 클라이언트 시크릿
 - **GOOGLE_CALLBACK_URL**: Google OAuth 콜백 URL
 - **NAVER_CLIENT_ID**: 네이버 OAuth 클라이언트 ID
 - **NAVER_CLIENT_SECRET**: 네이버 OAuth 클라이언트 시크릿
 - **NAVER_CALLBACK_URL**: 네이버 OAuth 콜백 URL
+
+**Cloudinary 설정 (프로필 이미지 업로드 사용 시)**
+- **CLOUDINARY_CLOUD_NAME**: Cloudinary 클라우드 이름
+- **CLOUDINARY_API_KEY**: Cloudinary API 키
+- **CLOUDINARY_API_SECRET**: Cloudinary API 시크릿
+
+**이메일 설정 (이메일 인증 사용 시)**
+- **EMAIL_USER**: 발신 이메일 주소 (Gmail 권장)
+- **EMAIL_PASSWORD**: 앱 비밀번호 (Gmail 2단계 인증 필요)
+- ⚠️ **주의**: Render 무료 플랜은 SMTP 포트(587, 465)를 차단하므로 로컬 환경에서만 작동
 
 #### 배포 환경변수 (Render/Vercel 배포 시)
 - **VERCEL_URL**: Vercel 배포 시 자동 설정되는 URL
