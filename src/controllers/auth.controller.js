@@ -39,6 +39,9 @@ class AuthController {
 
     const user = await authService.register({ email, password, name });
 
+    let emailSent = false;
+    let registrationMessage = '회원가입이 완료되었습니다.';
+
     // 이메일 인증 기능 (이메일 설정이 되어 있을 때만 실행)
     if (process.env.EMAIL_USER && process.env.EMAIL_PASSWORD) {
       try {
@@ -56,11 +59,18 @@ class AuthController {
         user.verificationTokenExpires = new Date(Date.now() + 24 * 60 * 60 * 1000);
 
         // 인증 이메일 발송
-        await emailService.sendVerificationEmail(user, verificationToken);
-        console.log('✅ 인증 이메일 발송 성공');
+        emailSent = await emailService.sendVerificationEmail(user, verificationToken);
+        
+        if (emailSent) {
+          console.log('✅ 인증 이메일 발송 성공');
+          registrationMessage = '회원가입이 완료되었습니다. 이메일을 확인하여 인증을 완료해주세요.';
+        } else {
+          console.log('⚠️ 인증 이메일 발송 실패 (회원가입은 완료됨)');
+          registrationMessage = '회원가입이 완료되었습니다. (인증 이메일 발송 실패 - 나중에 대시보드에서 재전송 가능)';
+        }
       } catch (error) {
-        console.error('⚠️ 인증 이메일 발송 실패:', error.message);
-        // 이메일 발송 실패해도 회원가입은 완료
+        console.error('⚠️ 인증 이메일 처리 실패:', error.message);
+        registrationMessage = '회원가입이 완료되었습니다. (인증 이메일 발송 실패 - 나중에 대시보드에서 재전송 가능)';
       }
     } else {
       console.log('ℹ️  이메일 인증 비활성화 (EMAIL_USER 또는 EMAIL_PASSWORD가 설정되지 않음)');
@@ -77,7 +87,7 @@ class AuthController {
 
       res.status(201).json({
         success: true,
-        message: '회원가입이 완료되었습니다. 이메일을 확인하여 인증을 완료해주세요.',
+        message: registrationMessage,
         data: { user },
       });
     });

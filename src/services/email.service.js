@@ -36,7 +36,8 @@ class EmailService {
       return true;
     } catch (error) {
       console.error('❌ 인증 이메일 발송 실패:', error);
-      throw new Error('인증 이메일 발송에 실패했습니다.');
+      // 이메일 발송 실패는 회원가입을 실패시키지 않음 (Render 등에서 SMTP가 차단될 수 있음)
+      return false;
     }
   }
 
