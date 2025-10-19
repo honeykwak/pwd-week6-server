@@ -37,7 +37,16 @@ class AuthController {
       });
     }
 
-    const user = await authService.register({ email, password, name });
+    let user;
+    try {
+      user = await authService.register({ email, password, name });
+    } catch (error) {
+      // 중복 이메일 등의 회원가입 실패 시 명확한 에러 반환
+      return res.status(400).json({
+        success: false,
+        message: error.message || '회원가입에 실패했습니다.',
+      });
+    }
 
     let emailSent = false;
     let registrationMessage = '회원가입이 완료되었습니다.';
