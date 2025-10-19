@@ -34,17 +34,16 @@ const notificationSchema = new mongoose.Schema({
     required: true,
   },
 
-  // 관련 데이터
+  // 관련 데이터 (Submission과 Restaurant의 id는 Number 타입)
   data: {
     submissionId: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: 'Submission',
+      type: Number,
     },
     restaurantId: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: 'Restaurant',
+      type: Number,
     },
     restaurantName: String,
+    rejectionReason: String, // 거부 사유
   },
 
   // 읽음 여부
